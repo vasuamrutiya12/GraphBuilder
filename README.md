@@ -1,3 +1,4 @@
+<img width="1919" height="926" alt="image" src="https://github.com/user-attachments/assets/ac383b35-d559-4bcc-a8da-b1be38464e76" />
 # Graph Builder - Flutter App
 
 A comprehensive Flutter application for creating, navigating, and managing tree-like graphs of nodes. Each node has a unique label and can have multiple children, with full support for all edge cases and advanced features.
