@@ -152,25 +152,71 @@ class _GraphBuilderHomePageState extends State<GraphBuilderHomePage>
               if (graphProvider.activeNode != null)
                 ScaleTransition(
                   scale: _fabAnimation,
-                  child: FloatingActionButton(
-                    heroTag: "delete",
-                    onPressed: () => _showDeleteDialog(context, graphProvider),
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                    child: const Icon(Icons.delete, color: Colors.white),
-                    tooltip: 'Delete Active Node',
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.red.shade400,
+                          Colors.red.shade600,
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.red.withOpacity(0.3),
+                          blurRadius: 15,
+                          spreadRadius: 3,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: FloatingActionButton(
+                      heroTag: "delete",
+                      onPressed: () => _showDeleteDialog(context, graphProvider),
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      child: const Icon(Icons.delete, color: Colors.white),
+                      tooltip: 'Delete Active Node',
+                    ),
                   ),
                 ),
               const SizedBox(height: 16),
               // Add child button
               ScaleTransition(
                 scale: _fabAnimation,
-                child: FloatingActionButton(
-                  heroTag: "add",
-                  onPressed: canAddChild
-                      ? () => _addChildNode(context, graphProvider)
-                      : null,
-                  child: const Icon(Icons.add),
-                  tooltip: canAddChild ? 'Add Child Node' : 'Maximum Depth Reached',
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: canAddChild
+                          ? [
+                              Colors.blue.shade400,
+                              Colors.blue.shade600,
+                            ]
+                          : [
+                              Colors.grey.shade400,
+                              Colors.grey.shade600,
+                            ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (canAddChild ? Colors.blue : Colors.grey).withOpacity(0.3),
+                        blurRadius: 15,
+                        spreadRadius: 3,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: FloatingActionButton(
+                    heroTag: "add",
+                    onPressed: canAddChild
+                        ? () => _addChildNode(context, graphProvider)
+                        : null,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    child: const Icon(Icons.add, color: Colors.white),
+                    tooltip: canAddChild ? 'Add Child Node' : 'Maximum Depth Reached',
+                  ),
                 ),
               ),
             ],
