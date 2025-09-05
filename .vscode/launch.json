@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        
+      {
+        "name": "Flutter Web (Chrome)",
+        "request": "launch",
+        "type": "dart",
+        "args": ["-d", "chrome"]
+      },
+      {
+        "name": "Flutter Web (Edge)",
+        "request": "launch",
+        "type": "dart",
+        "args": ["-d", "edge"]
+      },
+      {
+        "name": "Flutter Web (Web Server)",
+        "request": "launch",
+        "type": "dart",
+        "args": ["-d", "web-server"]
+      }
+    ]
+  }
+  
