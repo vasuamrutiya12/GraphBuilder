@@ -16,7 +16,7 @@ class GraphBuilderApp extends StatelessWidget {
       create: (context) => GraphProvider(),
       child: MaterialApp(
         title: 'Graph Builder',
-        theme: ThemeData(
+      theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF00E5FF),
             brightness: Brightness.light,
@@ -154,15 +154,15 @@ class _GraphBuilderHomePageState extends State<GraphBuilderHomePage>
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Text(
+            Text(
                       'Next ID: ${graphProvider.nextNodeId}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.white70,
                       ),
-                    ),
-                  ],
-                ),
-              ),
+            ),
+          ],
+        ),
+      ),
               // Graph visualization
               Expanded(
                 child: Container(

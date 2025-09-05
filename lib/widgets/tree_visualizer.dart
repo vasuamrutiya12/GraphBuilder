@@ -154,9 +154,9 @@ class _TreeVisualizerState extends State<TreeVisualizer>
             ),
           ],
         ),
-      ),
-    );
-  }
+            ),
+          );
+        }
 
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
@@ -190,12 +190,12 @@ class _TreeVisualizerState extends State<TreeVisualizer>
   }
 
   Widget _buildInteractiveGraph(GraphProvider graphProvider) {
-    return InteractiveViewer(
-      transformationController: _transformationController,
+        return InteractiveViewer(
+          transformationController: _transformationController,
       minScale: 0.5,
-      maxScale: 3.0,
+          maxScale: 3.0,
       child: SingleChildScrollView(
-        child: Container(
+          child: Container(
           width: MediaQuery.of(context).size.width,
           padding: const EdgeInsets.all(60.0),
           child: Column(
@@ -388,14 +388,17 @@ class _TreeVisualizerState extends State<TreeVisualizer>
   Widget _buildCurvedConnections(Node parent, GraphProvider graphProvider) {
     if (parent.children.isEmpty) return const SizedBox.shrink();
     
-    return CustomPaint(
-      painter: CurvedConnectionPainter(
-        parent.children.length,
-        _getNodeColorByDepth(parent.depth, false, parent.parent == null),
-      ),
-      size: Size(
-        math.max(400, parent.children.length * 160.0),
-        80,
+    return Container(
+      height: 60,
+      child: CustomPaint(
+        painter: CurvedConnectionPainter(
+          parent.children.length,
+          _getNodeColorByDepth(parent.depth, false, parent.parent == null),
+        ),
+        size: Size(
+          math.max(400, parent.children.length * 120.0),
+          60,
+        ),
       ),
     );
   }
@@ -514,14 +517,15 @@ class CurvedConnectionPainter extends CustomPainter {
 
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
+      ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round;
 
+    // Create a more vibrant gradient
     final gradient = LinearGradient(
       colors: [
-        baseColor.withOpacity(0.3),
-        baseColor.withOpacity(0.8),
-        baseColor.withOpacity(0.3),
+        baseColor.withOpacity(0.4),
+        baseColor.withOpacity(0.9),
+        baseColor.withOpacity(0.4),
       ],
     );
 
@@ -529,49 +533,60 @@ class CurvedConnectionPainter extends CustomPainter {
       Rect.fromLTWH(0, 0, size.width, size.height),
     );
 
-    final path = Path();
     final centerX = size.width / 2;
-    final startY = 20.0;
-    final endY = size.height - 20.0;
+    final startY = 10.0;
+    final endY = size.height - 10.0;
     
-    // Draw main vertical line
-    path.moveTo(centerX, startY);
-    path.lineTo(centerX, startY + 20);
-    
-    // Draw horizontal connector
-    final spacing = math.min(120.0, (size.width - 100) / childCount);
+    // Calculate spacing to match Wrap widget spacing (60px)
+    final spacing = 120.0; // Match the Wrap spacing * 2 for better alignment
     final totalWidth = (childCount - 1) * spacing;
     final startX = centerX - totalWidth / 2;
     
-    path.moveTo(startX, startY + 20);
-    path.lineTo(startX + totalWidth, startY + 20);
+    // Draw main vertical line from parent
+    final mainPath = Path();
+    mainPath.moveTo(centerX, startY);
+    mainPath.lineTo(centerX, startY + 15);
+    canvas.drawPath(mainPath, paint);
     
-    // Draw curved connections to children
+    // Draw horizontal connector line
+    final horizontalPath = Path();
+    horizontalPath.moveTo(startX, startY + 15);
+    horizontalPath.lineTo(startX + totalWidth, startY + 15);
+    canvas.drawPath(horizontalPath, paint);
+    
+    // Draw curved connections to each child
     for (int i = 0; i < childCount; i++) {
       final x = startX + i * spacing;
-      final controlY = startY + 35;
+      final controlY = startY + 25;
       
+      // Create curved path to child
       final childPath = Path();
-      childPath.moveTo(x, startY + 20);
+      childPath.moveTo(x, startY + 15);
       childPath.quadraticBezierTo(x, controlY, x, endY);
       
       canvas.drawPath(childPath, paint);
       
-      // Draw arrowhead
+      // Draw glowing arrowhead
       final arrowPaint = Paint()
-        ..color = baseColor.withOpacity(0.8)
+        ..color = baseColor.withOpacity(0.9)
         ..style = PaintingStyle.fill;
       
       final arrowPath = Path();
       arrowPath.moveTo(x, endY);
-      arrowPath.lineTo(x - 6, endY - 12);
-      arrowPath.lineTo(x + 6, endY - 12);
+      arrowPath.lineTo(x - 5, endY - 10);
+      arrowPath.lineTo(x + 5, endY - 10);
       arrowPath.close();
       
       canvas.drawPath(arrowPath, arrowPaint);
+      
+      // Add glow effect to arrowhead
+      final glowPaint = Paint()
+        ..color = baseColor.withOpacity(0.3)
+        ..style = PaintingStyle.fill
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+      
+      canvas.drawPath(arrowPath, glowPaint);
     }
-    
-    canvas.drawPath(path, paint);
   }
 
   @override
