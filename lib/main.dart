@@ -18,17 +18,19 @@ class GraphBuilderApp extends StatelessWidget {
         title: 'Graph Builder',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
+            seedColor: const Color(0xFF00E5FF),
             brightness: Brightness.light,
           ),
           useMaterial3: true,
+          fontFamily: 'Roboto',
         ),
         darkTheme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
+            seedColor: const Color(0xFF00E5FF),
             brightness: Brightness.dark,
           ),
           useMaterial3: true,
+          fontFamily: 'Roboto',
         ),
         home: const GraphBuilderHomePage(),
         debugShowCheckedModeBanner: false,
@@ -74,7 +76,21 @@ class _GraphBuilderHomePageState extends State<GraphBuilderHomePage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Graph Builder'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFF1a1a2e).withOpacity(0.9),
+                const Color(0xFF16213e).withOpacity(0.9),
+              ],
+            ),
+          ),
+        ),
+        foregroundColor: Colors.white,
         actions: [
           Consumer<GraphProvider>(
             builder: (context, graphProvider, child) {
@@ -113,17 +129,36 @@ class _GraphBuilderHomePageState extends State<GraphBuilderHomePage>
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16.0),
-                color: Theme.of(context).colorScheme.surfaceVariant,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF1a1a2e).withOpacity(0.8),
+                      const Color(0xFF16213e).withOpacity(0.8),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Active Node: ${graphProvider.activeNode?.label ?? "None"}',
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     Text(
                       'Next ID: ${graphProvider.nextNodeId}',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white70,
+                      ),
                     ),
                   ],
                 ),
@@ -156,17 +191,26 @@ class _GraphBuilderHomePageState extends State<GraphBuilderHomePage>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                         colors: [
-                          Colors.red.shade400,
-                          Colors.red.shade600,
+                          const Color(0xFFFF1744),
+                          const Color(0xFFD50000),
+                          const Color(0xFFB71C1C),
                         ],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.red.withOpacity(0.3),
-                          blurRadius: 15,
-                          spreadRadius: 3,
+                          color: const Color(0xFFFF1744).withOpacity(0.4),
+                          blurRadius: 20,
+                          spreadRadius: 5,
                           offset: const Offset(0, 5),
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
@@ -188,22 +232,34 @@ class _GraphBuilderHomePageState extends State<GraphBuilderHomePage>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                       colors: canAddChild
                           ? [
-                              Colors.blue.shade400,
-                              Colors.blue.shade600,
+                              const Color(0xFF00E5FF),
+                              const Color(0xFF00B0FF),
+                              const Color(0xFF0091EA),
                             ]
                           : [
-                              Colors.grey.shade400,
-                              Colors.grey.shade600,
+                              const Color(0xFF616161),
+                              const Color(0xFF424242),
+                              const Color(0xFF212121),
                             ],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: (canAddChild ? Colors.blue : Colors.grey).withOpacity(0.3),
-                        blurRadius: 15,
-                        spreadRadius: 3,
+                        color: (canAddChild 
+                            ? const Color(0xFF00E5FF) 
+                            : const Color(0xFF616161)).withOpacity(0.4),
+                        blurRadius: 20,
+                        spreadRadius: 5,
                         offset: const Offset(0, 5),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),

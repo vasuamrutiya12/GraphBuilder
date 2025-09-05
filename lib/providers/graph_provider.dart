@@ -135,6 +135,14 @@ class GraphProvider extends ChangeNotifier {
     }
   }
 
+  void deleteNodeWithAnimation(String nodeId, VoidCallback onComplete) {
+    // Add a small delay for animation
+    Future.delayed(const Duration(milliseconds: 300), () {
+      final success = deleteActiveNode();
+      onComplete();
+    });
+  }
+
   Node? _findNodeById(Node node, String id) {
     if (node.id == id) return node;
     
