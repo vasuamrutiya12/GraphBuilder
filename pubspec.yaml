@@ -37,6 +37,9 @@ dependencies:
   
   # State management
   provider: ^6.1.2
+  
+  # For advanced path calculations
+  path_provider: ^2.1.1
 
 dev_dependencies:
   flutter_test:

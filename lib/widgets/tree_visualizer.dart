@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/node.dart';
 import '../providers/graph_provider.dart';
+import 'graph_edge_painter.dart';
 import 'dart:math' as math;
 
 class TreeVisualizer extends StatefulWidget {
@@ -198,9 +199,16 @@ class _TreeVisualizerState extends State<TreeVisualizer>
           child: Container(
           width: MediaQuery.of(context).size.width,
           padding: const EdgeInsets.all(60.0),
-          child: Column(
+          child: Stack(
             children: [
-              _buildEnhancedNodeTree(graphProvider.root!, graphProvider, 0),
+              // Draw edges first (behind nodes)
+              _buildEdgeLayer(graphProvider),
+              // Draw nodes on top
+              Column(
+                children: [
+                  _buildEnhancedNodeTree(graphProvider.root!, graphProvider, 0),
+                ],
+              ),
             ],
           ),
         ),
@@ -208,14 +216,86 @@ class _TreeVisualizerState extends State<TreeVisualizer>
     );
   }
 
+  Widget _buildEdgeLayer(GraphProvider graphProvider) {
+    final edges = _calculateEdgeData(graphProvider);
+    
+    return Positioned.fill(
+      child: CurvedEdgeWidget(
+        edges: edges,
+        hoveredNodeId: _hoveredNodeId,
+        activeNodeId: graphProvider.activeNode?.id,
+        showParticles: true,
+      ),
+    );
+  }
+
+  List<EdgeData> _calculateEdgeData(GraphProvider graphProvider) {
+    final edges = <EdgeData>[];
+    final nodePositions = <String, Offset>{};
+    
+    // Calculate node positions (this is a simplified version)
+    _calculateNodePositions(graphProvider.root!, nodePositions, 
+                           Offset(MediaQuery.of(context).size.width / 2, 100), 0);
+    
+    // Generate edge data
+    _generateEdgesForNode(graphProvider.root!, edges, nodePositions, graphProvider);
+    
+    return edges;
+  }
+
+  void _calculateNodePositions(Node node, Map<String, Offset> positions, Offset position, int level) {
+    positions[node.id] = position;
+    
+    if (node.children.isNotEmpty) {
+      final childrenWidth = (node.children.length - 1) * 180.0;
+      final startX = position.dx - childrenWidth / 2;
+      final childY = position.dy + 200.0;
+      
+      for (int i = 0; i < node.children.length; i++) {
+        final childX = startX + i * 180.0;
+        final childPosition = Offset(childX, childY);
+        _calculateNodePositions(node.children[i], positions, childPosition, level + 1);
+      }
+    }
+  }
+
+  void _generateEdgesForNode(Node node, List<EdgeData> edges, 
+                           Map<String, Offset> positions, GraphProvider graphProvider) {
+    final parentPosition = positions[node.id];
+    if (parentPosition == null) return;
+    
+    for (final child in node.children) {
+      final childPosition = positions[child.id];
+      if (childPosition == null) continue;
+      
+      // Calculate curve intensity based on horizontal distance
+      final horizontalDistance = (childPosition.dx - parentPosition.dx).abs();
+      final curveIntensity = math.min(horizontalDistance * 0.3, 80.0);
+      
+      edges.add(EdgeData(
+        parentId: node.id,
+        childId: child.id,
+        startPoint: Offset(parentPosition.dx, parentPosition.dy + 60), // Offset from node center
+        endPoint: Offset(childPosition.dx, childPosition.dy - 60),
+        parentColor: _getNodeColorByDepth(node.depth, false, node.parent == null),
+        childColor: _getNodeColorByDepth(child.depth, false, false),
+        curveIntensity: curveIntensity,
+        maxWidth: 5.0,
+        minWidth: 2.0,
+        particleCount: 4,
+        particleSpeed: 0.3,
+      ));
+      
+      // Recursively generate edges for children
+      _generateEdgesForNode(child, edges, positions, graphProvider);
+    }
+  }
   Widget _buildEnhancedNodeTree(Node node, GraphProvider graphProvider, int level) {
     return Column(
       children: [
         _buildEnhancedNode(node, graphProvider),
         if (node.children.isNotEmpty) ...[
-          const SizedBox(height: 60),
-          _buildCurvedConnections(node, graphProvider),
-          const SizedBox(height: 40),
+          const SizedBox(height: 200), // Increased spacing for curved edges
           _buildChildrenRow(node, graphProvider, level + 1),
         ],
       ],
@@ -385,28 +465,11 @@ class _TreeVisualizerState extends State<TreeVisualizer>
     );
   }
 
-  Widget _buildCurvedConnections(Node parent, GraphProvider graphProvider) {
-    if (parent.children.isEmpty) return const SizedBox.shrink();
-    
-    return Container(
-      height: 60,
-      child: CustomPaint(
-        painter: CurvedConnectionPainter(
-          parent.children.length,
-          _getNodeColorByDepth(parent.depth, false, parent.parent == null),
-        ),
-        size: Size(
-          math.max(400, parent.children.length * 120.0),
-          60,
-        ),
-      ),
-    );
-  }
 
   Widget _buildChildrenRow(Node parent, GraphProvider graphProvider, int level) {
     return Wrap(
-      spacing: 60,
-      runSpacing: 60,
+      spacing: 180, // Increased spacing for better curve visualization
+      runSpacing: 200,
       alignment: WrapAlignment.center,
       children: parent.children.map((child) {
         return _buildEnhancedNodeTree(child, graphProvider, level);
@@ -505,93 +568,6 @@ class _TreeVisualizerState extends State<TreeVisualizer>
   }
 }
 
-class CurvedConnectionPainter extends CustomPainter {
-  final int childCount;
-  final Color baseColor;
-
-  CurvedConnectionPainter(this.childCount, this.baseColor);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (childCount <= 1) return;
-
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5
-      ..strokeCap = StrokeCap.round;
-
-    // Create a more vibrant gradient
-    final gradient = LinearGradient(
-      colors: [
-        baseColor.withOpacity(0.4),
-        baseColor.withOpacity(0.9),
-        baseColor.withOpacity(0.4),
-      ],
-    );
-
-    paint.shader = gradient.createShader(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-    );
-
-    final centerX = size.width / 2;
-    final startY = 10.0;
-    final endY = size.height - 10.0;
-    
-    // Calculate spacing to match Wrap widget spacing (60px)
-    final spacing = 120.0; // Match the Wrap spacing * 2 for better alignment
-    final totalWidth = (childCount - 1) * spacing;
-    final startX = centerX - totalWidth / 2;
-    
-    // Draw main vertical line from parent
-    final mainPath = Path();
-    mainPath.moveTo(centerX, startY);
-    mainPath.lineTo(centerX, startY + 15);
-    canvas.drawPath(mainPath, paint);
-    
-    // Draw horizontal connector line
-    final horizontalPath = Path();
-    horizontalPath.moveTo(startX, startY + 15);
-    horizontalPath.lineTo(startX + totalWidth, startY + 15);
-    canvas.drawPath(horizontalPath, paint);
-    
-    // Draw curved connections to each child
-    for (int i = 0; i < childCount; i++) {
-      final x = startX + i * spacing;
-      final controlY = startY + 25;
-      
-      // Create curved path to child
-      final childPath = Path();
-      childPath.moveTo(x, startY + 15);
-      childPath.quadraticBezierTo(x, controlY, x, endY);
-      
-      canvas.drawPath(childPath, paint);
-      
-      // Draw glowing arrowhead
-      final arrowPaint = Paint()
-        ..color = baseColor.withOpacity(0.9)
-        ..style = PaintingStyle.fill;
-      
-      final arrowPath = Path();
-      arrowPath.moveTo(x, endY);
-      arrowPath.lineTo(x - 5, endY - 10);
-      arrowPath.lineTo(x + 5, endY - 10);
-      arrowPath.close();
-      
-      canvas.drawPath(arrowPath, arrowPaint);
-      
-      // Add glow effect to arrowhead
-      final glowPaint = Paint()
-        ..color = baseColor.withOpacity(0.3)
-        ..style = PaintingStyle.fill
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-      
-      canvas.drawPath(arrowPath, glowPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
 class ParticleEffectPainter extends CustomPainter {
   final double animationValue;
