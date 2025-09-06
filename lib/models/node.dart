@@ -4,6 +4,7 @@ class Node {
   final List<Node> children;
   final Node? parent;
   final int depth;
+  bool collapsed;
 
   Node({
     required this.id,
@@ -11,6 +12,7 @@ class Node {
     this.children = const [],
     this.parent,
     this.depth = 0,
+    this.collapsed = false,
   });
 
   Node copyWith({
@@ -19,6 +21,7 @@ class Node {
     List<Node>? children,
     Node? parent,
     int? depth,
+    bool? collapsed,
   }) {
     return Node(
       id: id ?? this.id,
@@ -26,6 +29,7 @@ class Node {
       children: children ?? this.children,
       parent: parent ?? this.parent,
       depth: depth ?? this.depth,
+      collapsed: collapsed ?? this.collapsed,
     );
   }
 

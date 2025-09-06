@@ -45,7 +45,7 @@ class _GraphNodeState extends State<GraphNode>
     
     _scaleAnimation = Tween<double>(
       begin: 1.0,
-      end: 1.15,
+      end: 1.2,
     ).animate(CurvedAnimation(
       parent: _scaleController,
       curve: Curves.elasticOut,
@@ -115,6 +115,14 @@ class _GraphNodeState extends State<GraphNode>
     widget.onTap();
   }
 
+  void _onHover(bool isHovering) {
+    if (isHovering) {
+      _scaleController.forward();
+    } else {
+      _scaleController.reverse();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -125,92 +133,138 @@ class _GraphNodeState extends State<GraphNode>
     
     return GestureDetector(
       onTap: _handleTap,
-      child: AnimatedBuilder(
-        animation: Listenable.merge([_scaleAnimation, _pulseAnimation, _rippleAnimation]),
-        builder: (context, child) {
-          final scale = isActive ? _scaleAnimation.value : 1.0;
-          final pulse = isActive ? _pulseAnimation.value : 1.0;
-          final ripple = _rippleAnimation.value;
-          
-          return Transform.scale(
-            scale: scale * pulse,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Ripple effect
-                if (ripple > 0)
-                  Container(
-                    width: widget.size * (1 + ripple * 0.5),
-                    height: widget.size * (1 + ripple * 0.5),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: activeColor.withOpacity(0.3 * (1 - ripple)),
+      child: MouseRegion(
+        onEnter: (_) => _onHover(true),
+        onExit: (_) => _onHover(false),
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_scaleAnimation, _pulseAnimation, _rippleAnimation]),
+          builder: (context, child) {
+            final scale = isActive ? _scaleAnimation.value : 1.0;
+            final pulse = isActive ? _pulseAnimation.value : 1.0;
+            final ripple = _rippleAnimation.value;
+            
+            return Transform.scale(
+              scale: scale * pulse,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Enhanced ripple effect with neon glow
+                  if (ripple > 0)
+                    SizedBox(
+                      width: widget.size * (1 + ripple * 0.8),
+                      height: widget.size * (1 + ripple * 0.8),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              activeColor.withOpacity(0.6 * (1 - ripple)),
+                              activeColor.withOpacity(0.2 * (1 - ripple)),
+                              Colors.transparent,
+                            ],
+                            stops: const [0.0, 0.7, 1.0],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: activeColor.withOpacity(0.4 * (1 - ripple)),
+                              blurRadius: 20,
+                              spreadRadius: 5,
+                            ),
+                          ],
+                        ),
                     ),
                   ),
-                // Main node
-                Container(
+                // Main node with enhanced styling
+                SizedBox(
                   width: widget.size,
                   height: widget.size,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: isActive
-                        ? LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              activeColor,
-                              activeColor.withOpacity(0.8),
-                            ],
-                          )
-                        : null,
-                    color: isActive ? null : inactiveColor,
-                    border: Border.all(
-                      color: isActive 
-                        ? activeColor.withOpacity(0.9)
-                        : theme.colorScheme.outline.withOpacity(0.6),
-                      width: isActive ? 3.0 : 2.0,
-                    ),
-                    boxShadow: [
-                      if (isActive)
-                        BoxShadow(
-                          color: activeColor.withOpacity(0.4),
-                          blurRadius: 12.0,
-                          spreadRadius: 3.0,
-                        ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 6.0,
-                        spreadRadius: 1.0,
-                        offset: const Offset(0, 2),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: isActive
+                            ? [
+                                activeColor,
+                                activeColor.withOpacity(0.8),
+                                activeColor.withOpacity(0.6),
+                              ]
+                            : [
+                                inactiveColor,
+                                inactiveColor.withOpacity(0.8),
+                                inactiveColor.withOpacity(0.6),
+                              ],
+                        stops: const [0.0, 0.6, 1.0],
                       ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          widget.node.label,
-                          style: TextStyle(
-                            color: isActive 
-                              ? theme.colorScheme.onPrimary
-                              : theme.colorScheme.onSurface,
-                            fontSize: widget.size * 0.25,
-                            fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
+                      border: Border.all(
+                        color: isActive 
+                          ? activeColor.withOpacity(0.9)
+                          : theme.colorScheme.outline.withOpacity(0.6),
+                        width: isActive ? 3.0 : 2.0,
+                      ),
+                      boxShadow: [
+                        if (isActive) ...[
+                          BoxShadow(
+                            color: activeColor.withOpacity(0.6),
+                            blurRadius: 20.0,
+                            spreadRadius: 5.0,
                           ),
+                          BoxShadow(
+                            color: activeColor.withOpacity(0.3),
+                            blurRadius: 40.0,
+                            spreadRadius: 10.0,
+                          ),
+                        ],
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 8.0,
+                          spreadRadius: 2.0,
+                          offset: const Offset(0, 4),
                         ),
-                        if (widget.node.depth > 0)
+                      ],
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
                           Text(
-                            'D${widget.node.depth}',
+                            widget.node.label,
                             style: TextStyle(
                               color: isActive 
-                                ? theme.colorScheme.onPrimary.withOpacity(0.7)
-                                : theme.colorScheme.onSurface.withOpacity(0.5),
-                              fontSize: widget.size * 0.15,
-                              fontWeight: FontWeight.w400,
+                                ? Colors.white
+                                : Colors.white.withOpacity(0.9),
+                              fontSize: widget.size * 0.25,
+                              fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
+                              shadows: isActive ? [
+                                Shadow(
+                                  color: activeColor.withOpacity(0.8),
+                                  blurRadius: 10,
+                                ),
+                                Shadow(
+                                  color: activeColor.withOpacity(0.4),
+                                  blurRadius: 20,
+                                ),
+                              ] : null,
                             ),
                           ),
-                      ],
+                          if (widget.node.depth > 0)
+                            Text(
+                              'D${widget.node.depth}',
+                              style: TextStyle(
+                                color: isActive 
+                                  ? Colors.white.withOpacity(0.8)
+                                  : Colors.white.withOpacity(0.6),
+                                fontSize: widget.size * 0.15,
+                                fontWeight: FontWeight.w400,
+                                shadows: isActive ? [
+                                  Shadow(
+                                    color: activeColor.withOpacity(0.6),
+                                    blurRadius: 8,
+                                  ),
+                                ] : null,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -219,15 +273,17 @@ class _GraphNodeState extends State<GraphNode>
                   Positioned(
                     top: 4,
                     right: 4,
-                    child: Container(
+                    child: SizedBox(
                       width: 12,
                       height: 12,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: theme.colorScheme.onPrimary,
-                        border: Border.all(
-                          color: activeColor,
-                          width: 2,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: theme.colorScheme.onPrimary,
+                          border: Border.all(
+                            color: activeColor,
+                            width: 2,
+                          ),
                         ),
                       ),
                     ),
@@ -237,6 +293,7 @@ class _GraphNodeState extends State<GraphNode>
           );
         },
       ),
+    ),
     );
   }
 }

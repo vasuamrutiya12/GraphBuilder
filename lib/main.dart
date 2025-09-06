@@ -74,210 +74,383 @@ class _GraphBuilderHomePageState extends State<GraphBuilderHomePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Graph Builder'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF1a1a2e).withOpacity(0.9),
-                const Color(0xFF16213e).withOpacity(0.9),
-              ],
-            ),
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF0F0C29), // Deep space blue
+              Color(0xFF24243e), // Dark purple
+              Color(0xFF302B63), // Rich purple
+            ],
+            stops: [0.0, 0.5, 1.0],
           ),
         ),
-        foregroundColor: Colors.white,
-        actions: [
-          Consumer<GraphProvider>(
-            builder: (context, graphProvider, child) {
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Undo button
-                  IconButton(
-                    onPressed: graphProvider.canUndo() ? graphProvider.undo : null,
-                    icon: const Icon(Icons.undo),
-                    tooltip: 'Undo',
+        child: Stack(
+          children: [
+            // Animated background particles
+            _buildAnimatedBackground(),
+            // Main content
+            Column(
+              children: [
+                // Futuristic header
+                _buildFuturisticHeader(context),
+                // Graph visualization area
+                Expanded(
+                  child: Consumer<GraphProvider>(
+                    builder: (context, graphProvider, child) {
+                      return graphProvider.root == null
+                          ? _buildEmptyState()
+                          : const TreeVisualizer();
+                    },
                   ),
-                  // Redo button
-                  IconButton(
-                    onPressed: graphProvider.canRedo() ? graphProvider.redo : null,
-                    icon: const Icon(Icons.redo),
-                    tooltip: 'Redo',
-                  ),
-                  // Reset button
-                  IconButton(
-                    onPressed: () => _showResetDialog(context, graphProvider),
-                    icon: const Icon(Icons.refresh),
-                    tooltip: 'Reset Graph',
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-      body: Consumer<GraphProvider>(
-        builder: (context, graphProvider, child) {
-          return Column(
-            children: [
-              // Status bar
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF1a1a2e).withOpacity(0.8),
-                      const Color(0xFF16213e).withOpacity(0.8),
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Active Node: ${graphProvider.activeNode?.label ?? "None"}',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-            Text(
-                      'Next ID: ${graphProvider.nextNodeId}',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white70,
-                      ),
+              ],
             ),
+            // Floating action toolbar
+            _buildFloatingToolbar(context),
           ],
         ),
       ),
-              // Graph visualization
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  height: double.infinity,
-                  child: const TreeVisualizer(),
+    );
+  }
+
+  /// Builds animated background with floating particles
+  Widget _buildAnimatedBackground() {
+    return AnimatedBuilder(
+      animation: _fabAnimationController,
+      builder: (context, child) {
+        return CustomPaint(
+          painter: BackgroundParticlePainter(_fabAnimationController.value),
+          size: Size.infinite,
+        );
+      },
+    );
+  }
+
+  /// Builds futuristic header with glassmorphism effect
+  Widget _buildFuturisticHeader(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: MediaQuery.of(context).size.width * 0.05,
+        vertical: 20,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // App title with neon effect
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF00E5FF).withOpacity(0.2),
+                  const Color(0xFF0091EA).withOpacity(0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(
+                color: const Color(0xFF00E5FF).withOpacity(0.3),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00E5FF).withOpacity(0.2),
+                  blurRadius: 20,
+                  spreadRadius: 2,
                 ),
+              ],
+            ),
+            child: Text(
+              'GRAPH BUILDER',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2,
+                shadows: [
+                  Shadow(
+                    color: const Color(0xFF00E5FF).withOpacity(0.5),
+                    blurRadius: 10,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Action buttons
+          Row(
+            children: [
+              _buildHeaderButton(
+                icon: Icons.undo,
+                onPressed: () {
+                  // Undo functionality
+                },
+                tooltip: 'Undo',
+              ),
+              const SizedBox(width: 12),
+              _buildHeaderButton(
+                icon: Icons.redo,
+                onPressed: () {
+                  // Redo functionality
+                },
+                tooltip: 'Redo',
+              ),
+              const SizedBox(width: 12),
+              _buildHeaderButton(
+                icon: Icons.refresh,
+                onPressed: () {
+                  // Reset functionality
+                },
+                tooltip: 'Reset',
               ),
             ],
-          );
-        },
+          ),
+        ],
       ),
-      floatingActionButton: Consumer<GraphProvider>(
-        builder: (context, graphProvider, child) {
-          final canAddChild = graphProvider.activeNode != null &&
-              graphProvider.activeNode!.depth < graphProvider.maxDepth;
-          
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              // Delete button
-              if (graphProvider.activeNode != null)
-                ScaleTransition(
-                  scale: _fabAnimation,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          const Color(0xFFFF1744),
-                          const Color(0xFFD50000),
-                          const Color(0xFFB71C1C),
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF1744).withOpacity(0.4),
-                          blurRadius: 20,
-                          spreadRadius: 5,
-                          offset: const Offset(0, 5),
-                        ),
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 10,
-                          spreadRadius: 2,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: FloatingActionButton(
-                      heroTag: "delete",
+    );
+  }
+
+  /// Builds header action button with glassmorphism
+  Widget _buildHeaderButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required String tooltip,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.1),
+                Colors.white.withOpacity(0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white.withOpacity(0.8),
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Builds floating toolbar with futuristic design
+  Widget _buildFloatingToolbar(BuildContext context) {
+    return Consumer<GraphProvider>(
+      builder: (context, graphProvider, child) {
+        final canAddChild = graphProvider.activeNode != null &&
+            graphProvider.activeNode!.depth < graphProvider.maxDepth;
+        
+        return Positioned(
+          bottom: 30,
+          right: 30,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.black.withOpacity(0.8),
+                  Colors.black.withOpacity(0.6),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: const Color(0xFF00E5FF).withOpacity(0.3),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00E5FF).withOpacity(0.2),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Undo button
+                  _buildFloatingButton(
+                    icon: Icons.undo,
+                    onPressed: graphProvider.canUndo() ? () => graphProvider.undo() : null,
+                    gradient: graphProvider.canUndo()
+                        ? const LinearGradient(colors: [Color(0xFF9C27B0), Color(0xFF7B1FA2)])
+                        : const LinearGradient(colors: [Color(0xFF616161), Color(0xFF424242)]),
+                    tooltip: 'Undo',
+                  ),
+                  const SizedBox(height: 8),
+                  // Redo button
+                  _buildFloatingButton(
+                    icon: Icons.redo,
+                    onPressed: graphProvider.canRedo() ? () => graphProvider.redo() : null,
+                    gradient: graphProvider.canRedo()
+                        ? const LinearGradient(colors: [Color(0xFF9C27B0), Color(0xFF7B1FA2)])
+                        : const LinearGradient(colors: [Color(0xFF616161), Color(0xFF424242)]),
+                    tooltip: 'Redo',
+                  ),
+                  const SizedBox(height: 8),
+                  // Reset button
+                  _buildFloatingButton(
+                    icon: Icons.refresh,
+                    onPressed: () => _showResetDialog(context, graphProvider),
+                    gradient: const LinearGradient(colors: [Color(0xFFFF9800), Color(0xFFF57C00)]),
+                    tooltip: 'Reset Graph',
+                  ),
+                  const SizedBox(height: 8),
+                  // Delete button
+                  if (graphProvider.activeNode != null)
+                    _buildFloatingButton(
+                      icon: Icons.delete_outline,
                       onPressed: () => _showDeleteDialog(context, graphProvider),
-                      backgroundColor: Colors.transparent,
-                      elevation: 0,
-                      child: const Icon(Icons.delete, color: Colors.white),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF1744), Color(0xFFD50000)],
+                      ),
                       tooltip: 'Delete Active Node',
                     ),
-                  ),
-                ),
-              const SizedBox(height: 16),
-              // Add child button
-              ScaleTransition(
-                scale: _fabAnimation,
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: canAddChild
-                          ? [
-                              const Color(0xFF00E5FF),
-                              const Color(0xFF00B0FF),
-                              const Color(0xFF0091EA),
-                            ]
-                          : [
-                              const Color(0xFF616161),
-                              const Color(0xFF424242),
-                              const Color(0xFF212121),
-                            ],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (canAddChild 
-                            ? const Color(0xFF00E5FF) 
-                            : const Color(0xFF616161)).withOpacity(0.4),
-                        blurRadius: 20,
-                        spreadRadius: 5,
-                        offset: const Offset(0, 5),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: FloatingActionButton(
-                    heroTag: "add",
+                  if (graphProvider.activeNode != null) const SizedBox(height: 8),
+                  // Add child button
+                  _buildFloatingButton(
+                    icon: Icons.add,
                     onPressed: canAddChild
                         ? () => _addChildNode(context, graphProvider)
                         : null,
-                    backgroundColor: Colors.transparent,
-                    elevation: 0,
-                    child: const Icon(Icons.add, color: Colors.white),
+                    gradient: canAddChild
+                        ? const LinearGradient(
+                            colors: [Color(0xFF00E5FF), Color(0xFF0091EA)],
+                          )
+                        : const LinearGradient(
+                            colors: [Color(0xFF616161), Color(0xFF424242)],
+                          ),
                     tooltip: canAddChild ? 'Add Child Node' : 'Maximum Depth Reached',
                   ),
-                ),
+                ],
               ),
-            ],
-          );
-        },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Builds individual floating action button
+  Widget _buildFloatingButton({
+    required IconData icon,
+    required VoidCallback? onPressed,
+    required LinearGradient gradient,
+    required String tooltip,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: ScaleTransition(
+        scale: _fabAnimation,
+        child: GestureDetector(
+          onTap: onPressed,
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: gradient,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: gradient.colors.first.withOpacity(0.4),
+                  blurRadius: 15,
+                  spreadRadius: 3,
+                  offset: const Offset(0, 3),
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Builds empty state with futuristic design
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF00E5FF).withOpacity(0.1),
+                  const Color(0xFF0091EA).withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: const Color(0xFF00E5FF).withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: Icon(
+              Icons.account_tree_outlined,
+              size: 80,
+              color: const Color(0xFF00E5FF).withOpacity(0.6),
+            ),
+          ),
+          const SizedBox(height: 30),
+          Text(
+            'No Graph to Display',
+            style: TextStyle(
+              fontSize: 24,
+              color: Colors.white.withOpacity(0.8),
+              fontWeight: FontWeight.w300,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Create your first node to get started',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white.withOpacity(0.5),
+              fontWeight: FontWeight.w300,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -287,9 +460,12 @@ class _GraphBuilderHomePageState extends State<GraphBuilderHomePage>
     if (!success) {
       _showSnackBar(context, 'Cannot add child: Maximum depth reached!');
     } else {
-      // Animate the FAB
+      // Animate the FAB with bounce effect
       _fabAnimationController.reset();
       _fabAnimationController.forward();
+      
+      // Show success feedback
+      _showSnackBar(context, 'Child node added successfully!');
     }
   }
 
@@ -312,10 +488,43 @@ class _GraphBuilderHomePageState extends State<GraphBuilderHomePage>
               Text('Node: ${activeNode.label}'),
               if (childCount > 0) ...[
                 const SizedBox(height: 8),
-                Text(
-                  'This will also delete $childCount descendant node${childCount == 1 ? '' : 's'}.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.error.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.warning,
+                            color: Theme.of(context).colorScheme.error,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Subtree Deletion',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              color: Theme.of(context).colorScheme.error,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'This will delete the entire subtree:\n• $childCount descendant node${childCount == 1 ? '' : 's'}\n• All connections will be removed',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -393,7 +602,50 @@ class _GraphBuilderHomePageState extends State<GraphBuilderHomePage>
         content: Text(message),
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF1a1a2e).withOpacity(0.9),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
       ),
     );
   }
+}
+
+/// Background particle painter for animated background
+class BackgroundParticlePainter extends CustomPainter {
+  final double animationValue;
+
+  BackgroundParticlePainter(this.animationValue);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    // Draw floating particles
+    for (int i = 0; i < 50; i++) {
+      final progress = (animationValue + i / 50.0) % 1.0;
+      final x = size.width * (i / 50.0 + progress * 0.1) % size.width;
+      final y = size.height * (i / 50.0 + progress * 0.05) % size.height;
+      final radius = 1.0 + (i % 3) * 0.5;
+      final opacity = 0.1 + (i % 5) * 0.02;
+      
+      paint.color = const Color(0xFF00E5FF).withOpacity(opacity);
+      canvas.drawCircle(Offset(x, y), radius, paint);
+    }
+
+    // Draw grid lines
+    paint.color = const Color(0xFF00E5FF).withOpacity(0.05);
+    paint.strokeWidth = 0.5;
+    paint.style = PaintingStyle.stroke;
+
+    for (int i = 0; i < 20; i++) {
+      final x = size.width * i / 20;
+      final y = size.height * i / 20;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

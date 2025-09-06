@@ -108,6 +108,23 @@ class GraphProvider extends ChangeNotifier {
     return true;
   }
 
+  // Toggle node collapse/expand
+  void toggleNodeCollapse(String nodeId) {
+    final node = _findNodeById(_root!, nodeId);
+    if (node == null) return;
+    
+    _saveState();
+    
+    // Toggle collapsed state
+    if (node.collapsed) {
+      node.collapsed = false;
+    } else {
+      node.collapsed = true;
+    }
+    
+    notifyListeners();
+  }
+
   Node _addChildToNode(Node parent, Node newChild) {
     final updatedChildren = List<Node>.from(parent.children)..add(newChild);
     return parent.copyWith(children: updatedChildren);
@@ -115,6 +132,7 @@ class GraphProvider extends ChangeNotifier {
 
   Node _updateNodeInTree(Node root, Node updatedNode) {
     if (root.id == updatedNode.id) {
+      print('🔄 Updating node ${root.id} with ${updatedNode.children.length} children');
       return updatedNode;
     }
 
@@ -138,7 +156,7 @@ class GraphProvider extends ChangeNotifier {
   void deleteNodeWithAnimation(String nodeId, VoidCallback onComplete) {
     // Add a small delay for animation
     Future.delayed(const Duration(milliseconds: 300), () {
-      final success = deleteActiveNode();
+      deleteActiveNode();
       onComplete();
     });
   }
@@ -154,13 +172,14 @@ class GraphProvider extends ChangeNotifier {
     return null;
   }
 
+  /// Smart deletion that removes the active node and ALL its descendants (entire subtree)
   bool deleteActiveNode() {
     if (_activeNode == null || _root == null) return false;
     
     _saveState();
 
     if (_activeNode!.isRoot) {
-      // Reset to initial state
+      // Reset to initial state when deleting root
       _root = null;
       _activeNode = null;
       _nextNodeId = 1;
@@ -168,19 +187,106 @@ class GraphProvider extends ChangeNotifier {
       return true;
     }
 
-    // Find parent and remove this node from its children
-    final parent = _activeNode!.parent!;
+    // Smart deletion: Remove the entire subtree (node + all descendants)
+    final nodeToDelete = _activeNode!;
+    final parent = nodeToDelete.parent!;
+    final subtreeSize = nodeToDelete.allDescendants.length + 1; // +1 for the node itself
+    
+    print('🗑️ Deleting subtree: Node ${nodeToDelete.id} with $subtreeSize total nodes');
+    print('📊 Before deletion - Total nodes: ${getAllNodes().length}');
+    print('👨‍👩‍👧‍👦 Parent ${parent.id} has ${parent.children.length} children: ${parent.children.map((c) => c.id).join(', ')}');
+    
+    // Remove only this node from parent's children (this removes entire subtree)
     final updatedParentChildren = parent.children
-        .where((child) => child.id != _activeNode!.id)
+        .where((child) => child.id != nodeToDelete.id)
         .toList();
     
-    final updatedParent = parent.copyWith(children: updatedParentChildren);
+    print('👨‍👩‍👧‍👦 After filtering - Parent will have ${updatedParentChildren.length} children: ${updatedParentChildren.map((c) => c.id).join(', ')}');
     
-    // Update the tree
-    _root = _updateNodeInTree(_root!, updatedParent);
+    // Create a completely new tree structure to avoid any reference issues
+    _root = _rebuildTreeWithoutNode(_root!, nodeToDelete.id);
     
-    // Set parent as new active node
-    _activeNode = _findNodeById(_root!, updatedParent.id);
+    // Set parent as new active node (rebalance)
+    _activeNode = _findNodeById(_root!, parent.id);
+    
+    print('📊 After deletion - Total nodes: ${getAllNodes().length}');
+    print('✅ Subtree deletion complete. Active node: ${_activeNode?.id}');
+    
+    // Verify tree structure is correct
+    _verifyTreeStructure();
+    
+    notifyListeners();
+    return true;
+  }
+
+  /// Rebuilds the tree structure without the specified node and its subtree
+  Node _rebuildTreeWithoutNode(Node root, String nodeIdToDelete) {
+    // If this is the node to delete, return null (this shouldn't happen for non-root nodes)
+    if (root.id == nodeIdToDelete) {
+      return root; // This case is handled separately for root deletion
+    }
+    
+    // Filter out the node to delete from children and rebuild each child
+    final filteredChildren = root.children
+        .where((child) => child.id != nodeIdToDelete)
+        .map((child) => _rebuildTreeWithoutNode(child, nodeIdToDelete))
+        .toList();
+    
+    // Return a new node with filtered children
+    return root.copyWith(children: filteredChildren);
+  }
+
+  /// Verifies the tree structure is correct after deletion
+  void _verifyTreeStructure() {
+    if (_root == null) return;
+    
+    final allNodes = getAllNodes();
+    print('🔍 Tree verification:');
+    print('   Root: ${_root!.id}');
+    print('   Total nodes: ${allNodes.length}');
+    print('   All node IDs: ${allNodes.map((n) => n.id).join(', ')}');
+    
+    // Check that no orphaned nodes exist
+    for (final node in allNodes) {
+      if (!node.isRoot && node.parent == null) {
+        print('❌ ERROR: Found orphaned node ${node.id} without parent!');
+      }
+    }
+    
+    print('✅ Tree structure verification complete');
+  }
+
+  /// Delete a specific node by ID (useful for programmatic deletion)
+  bool deleteNodeById(String nodeId) {
+    if (_root == null) return false;
+    
+    // If deleting root, reset everything
+    if (_root!.id == nodeId) {
+      _saveState();
+      _root = null;
+      _activeNode = null;
+      _nextNodeId = 1;
+      _initializeGraph();
+      return true;
+    }
+    
+    // Find the node to delete
+    final nodeToDelete = _findNodeById(_root!, nodeId);
+    if (nodeToDelete == null) return false;
+    
+    // Find its parent
+    final parent = nodeToDelete.parent;
+    if (parent == null) return false;
+    
+    _saveState();
+    
+    // Create a completely new tree structure without the node and its subtree
+    _root = _rebuildTreeWithoutNode(_root!, nodeId);
+    
+    // If we deleted the active node, set parent as active
+    if (_activeNode?.id == nodeId) {
+      _activeNode = _findNodeById(_root!, parent.id);
+    }
     
     notifyListeners();
     return true;
